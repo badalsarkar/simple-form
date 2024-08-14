@@ -26,7 +26,26 @@
       }
       table th,
       table td {
-        min-width: 100px; /* Adjust this value as needed */
+        min-width: 100px;
+      }
+      .filter-dropdown {
+        position: relative;
+        margin-left: 10px;
+      }
+      .filter-dropdown .dropdown-menu {
+        position: absolute;
+        z-index: 1050;
+        top: 100%;
+        left: 0;
+        margin-top: 0.1rem;
+        will-change: transform;
+        transform: translate3d(0, 0, 0);
+      }
+      .dataTables_wrapper {
+        overflow: visible !important;
+      }
+      .thead-dark th {
+        vertical-align: middle;
       }
     </style>
   </head>
@@ -38,57 +57,57 @@
           >Create New Record</a
         >
       </div>
+      <!-- Filter Section -->
+      <div class="d-flex justify-content-start mb-3">
+        <!-- Filter for Name Column -->
+        <div class="dropdown filter-dropdown">
+          <button
+            class="btn btn-secondary btn-sm dropdown-toggle"
+            type="button"
+            id="nameDropdown"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            <i class="fas fa-filter"></i> Filter by Name
+          </button>
+          <ul
+            class="dropdown-menu"
+            aria-labelledby="nameDropdown"
+            id="nameFilterMenu"
+          >
+            <li><a class="dropdown-item" href="#" data-value="">All</a></li>
+          </ul>
+        </div>
+
+        <!-- Filter for Column 2 -->
+        <div class="dropdown filter-dropdown">
+          <button
+            class="btn btn-secondary btn-sm dropdown-toggle"
+            type="button"
+            id="column2Dropdown"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            <i class="fas fa-filter"></i> Filter by Column 2
+          </button>
+          <ul
+            class="dropdown-menu"
+            aria-labelledby="column2Dropdown"
+            id="column2FilterMenu"
+          >
+            <li><a class="dropdown-item" href="#" data-value="">All</a></li>
+          </ul>
+        </div>
+      </div>
       <div class="table-responsive">
         <table id="dataTable" class="table table-striped table-bordered w-100">
           <thead class="thead-dark">
             <tr>
               <th>ID</th>
-              <th>
-                <div class="d-flex justify-content-between align-items-center">
-                  Name
-                  <div class="dropdown ms-auto">
-                    <button
-                      class="btn btn-secondary btn-sm dropdown-toggle"
-                      type="button"
-                      id="nameDropdown"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
-                      <i class="fas fa-filter"></i>
-                    </button>
-                    <ul
-                      class="dropdown-menu"
-                      aria-labelledby="nameDropdown"
-                      id="nameFilterMenu"
-                    >
-                      <li>
-                        <a class="dropdown-item" href="#" data-value="">All</a>
-                      </li>
-                      <!-- Unique names will be populated here -->
-                    </ul>
-                  </div>
-                </div>
-              </th>
-              <!-- Repeat the below block for other columns -->
+              <th>Name</th>
               <th>Column 2</th>
               <th>Column 3</th>
               <th>Column 4</th>
-              <th>Column 5</th>
-              <th>Column 6</th>
-              <th>Column 7</th>
-              <th>Column 8</th>
-              <th>Column 9</th>
-              <th>Column 10</th>
-              <th>Column 11</th>
-              <th>Column 12</th>
-              <th>Column 13</th>
-              <th>Column 14</th>
-              <th>Column 15</th>
-              <th>Column 16</th>
-              <th>Column 17</th>
-              <th>Column 18</th>
-              <th>Column 19</th>
-              <!-- Add more columns as needed up to 20 columns -->
               <th>Column 20</th>
               <th>Actions</th>
             </tr>
@@ -101,22 +120,6 @@
               <td>{{ item.column2 }}</td>
               <td>{{ item.column3 }}</td>
               <td>{{ item.column4 }}</td>
-              <td>{{ item.column5 }}</td>
-              <td>{{ item.column6 }}</td>
-              <td>{{ item.column7 }}</td>
-              <td>{{ item.column8 }}</td>
-              <td>{{ item.column9 }}</td>
-              <td>{{ item.column10 }}</td>
-              <td>{{ item.column11 }}</td>
-              <td>{{ item.column12 }}</td>
-              <td>{{ item.column13 }}</td>
-              <td>{{ item.column14 }}</td>
-              <td>{{ item.column15 }}</td>
-              <td>{{ item.column16 }}</td>
-              <td>{{ item.column17 }}</td>
-              <td>{{ item.column18 }}</td>
-              <td>{{ item.column19 }}</td>
-              <!-- Populate other columns up to 20 -->
               <td>{{ item.column20 }}</td>
               <td>
                 <a
@@ -148,27 +151,49 @@
     <!-- DataTables JS -->
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-    <!-- Initialize DataTables with Column Search -->
+    <!-- Initialize DataTables -->
     <script>
       $(document).ready(function () {
         var table = $("#dataTable").DataTable({
           paging: true,
-          searching: true,
+          searching: true, // Enable DataTables default search
           ordering: true,
-          scrollX: true, // Enable horizontal scrolling if needed
-          autoWidth: false, // Disable autoWidth for flexible columns
+          scrollX: true,
+          autoWidth: false,
         });
 
-        // Get unique names and populate the dropdown
-        var uniqueNames = [];
+        // Custom filtering logic for dropdowns
+        var nameDropdown = $("#nameFilterMenu");
+        var column2Dropdown = $("#column2FilterMenu");
+
+        // Populate dropdowns with unique values from the table
+        var nameUniqueValues = [];
         table
           .column(1)
           .data()
           .unique()
           .each(function (d, j) {
-            if (d && uniqueNames.indexOf(d) === -1) {
-              uniqueNames.push(d);
-              $("#nameFilterMenu").append(
+            if (d && nameUniqueValues.indexOf(d) === -1) {
+              nameUniqueValues.push(d);
+              nameDropdown.append(
+                '<li><a class="dropdown-item" href="#" data-value="' +
+                  d +
+                  '">' +
+                  d +
+                  "</a></li>",
+              );
+            }
+          });
+
+        var column2UniqueValues = [];
+        table
+          .column(2)
+          .data()
+          .unique()
+          .each(function (d, j) {
+            if (d && column2UniqueValues.indexOf(d) === -1) {
+              column2UniqueValues.push(d);
+              column2Dropdown.append(
                 '<li><a class="dropdown-item" href="#" data-value="' +
                   d +
                   '">' +
@@ -179,9 +204,19 @@
           });
 
         // Filter the table when a dropdown item is clicked
-        $("#nameFilterMenu").on("click", "a", function () {
+        nameDropdown.on("click", "a", function () {
           var filterValue = $(this).data("value");
           table.column(1).search(filterValue).draw();
+        });
+
+        column2Dropdown.on("click", "a", function () {
+          var filterValue = $(this).data("value");
+          table.column(2).search(filterValue).draw();
+        });
+
+        // Prevent sorting when clicking on the dropdown toggle
+        $("#nameDropdown, #column2Dropdown").on("click", function (e) {
+          e.stopPropagation();
         });
       });
     </script>
